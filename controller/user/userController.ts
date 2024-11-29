@@ -129,6 +129,25 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+//GET ADMIN
+export const getAllAdmin = async (req: Request, res: Response) => {
+  try {
+    let admin = await UserModel.findById({
+      isAdmin: true,
+      isDelete: false,
+    });
+    // console.log(admin);
+    if (!admin) {
+      return res.status(404).json({ message: `Admin Data Not Found...!` });
+    }
+    res.status(200).json(admin);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: `Internal Server Error..${console.error()}` });
+  }
+};
 
 //UPDATE USER
 export const updateUser = async (req: Request, res: Response) => {

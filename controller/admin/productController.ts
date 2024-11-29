@@ -4,43 +4,38 @@ import ProductModel from "../../schemas/productSchema";
 
 // ADD NEW PRODUCT
 export const addNewProduct = async (req: Request, res: Response) => {
-    console.log("Product body data ====> ", req.body);
-
     try {
-        let product = await ProductModel.findOne({ title: req.body.title, isDelete: false });
-        console.log("product is:", product);
+        console.log("Product body data ====> ", req.body);
 
+        let product = await ProductModel.findOne({ title: req.body.title, isDelete: false });
         if (product) {
             return res.status(400).json({ message: 'Product already exists' });
         }
 
         req.body.price = Number(req.body.price);
-        console.log((req as any).files);
-        if (!(req as any).files || (req as any).files.length === 0) {
-            return res.status(400).json({ message: 'No 📁📁📁 files uploaded !!! ' });
+
+        if (!req.files || !(req.files as any[]).length) {
+            return res.status(400).json({ message: 'No files uploaded!' });
         }
 
         const imagePath: string[] = [];
-        const files: any[] = (req as any).files;
+        const files: any[] = req.files as any[];
+
         files.forEach((file: any) => {
-            const path = file.path.replace(/\\/g, "/")
-            // console.log({ path });
+            const path = file.path.replace(/\\/g, "/");
             imagePath.push(path);
         });
-        console.log(imagePath);
-        // res.status(500).json({ message: 'Internal Server Error' });
 
         product = await ProductModel.create({ ...req.body, productImage: imagePath });
-        product.save();
-        // console.log(product);
-        res.status(201).json({ product, message: 'Product Added' });
-        // console.log("Product Is ====>", product);
+        await product.save();
+
+        console.log("Product Added: ", product);
+        res.status(201).json({ product, message: 'Product Added Successfully' });
     } catch (error) {
-        console.log(error);
+        console.error("Error in addNewProduct:", error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-
 // GET ALL PRODUCT
 export const getAllProduct = async (req: Request, res: Response) => {
     try {
