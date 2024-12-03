@@ -5,13 +5,14 @@ import UserModel from "../../schemas/userSchema";
 import { IUser } from "../../models/IUser";
 
 
+
 // REGISTER User
 export const registerUser = async (request: Request, response: Response) => {
   try {
     const { firstName, lastName, gender, email, password, mobileNo, dateOfBirth } =
       request.body;
     // Validate if all fields are provided
-    if (!firstName || !lastName || !gender || !email || !password || !mobileNo || !dateOfBirth) {
+    if (!firstName || !lastName || !gender || !email || !password || !mobileNo || !dateOfBirth ) {
       return response.status(400).json({ message: "All fields are required." });
     }
     // Check if admin already exists
@@ -44,39 +45,50 @@ export const registerUser = async (request: Request, response: Response) => {
 };
 
 // REGISTER ADMIN
-export const registerAdmin = async (request: Request, response: Response) => {
+export const registerAdmin = async (req: Request, res: Response) => {
   try {
-    const { firstName, lastName, gender, email, password, mobileNo, dateOfBirth } =
-      request.body;
+    // Check if file is uploaded
+    if (!req.file) {
+      return res.status(400).json({ message: "Profile image is required" });
+    }
+
+    // Extract form data
+    const { firstName, lastName, gender, email, password, mobileNo, dateOfBirth } = req.body;
+    
+
     // Validate if all fields are provided
     if (!firstName || !lastName || !gender || !email || !password || !mobileNo || !dateOfBirth) {
-      return response.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "All fields are required." });
     }
+
     // Check if admin already exists
     let adminobj = await UserModel.findOne({ email: email }) as IUser;
     if (adminobj) {
-      return response.status(409).json({ message: "Admin already exists." });
+      return res.status(409).json({ message: "Admin already exists." });
     }
+
     // Hash password
     const salt = await bcrypt.genSalt(11);
     const hashPassword = await bcrypt.hash(password, salt);
 
     // Create new admin
     let newAdmin: IUser = {
-      firstName: firstName,
-      email: email,
-      lastName: lastName,
-      dateOfBirth: dateOfBirth,
-      gender: gender,
-      mobileNo: mobileNo,
+      firstName,
+      lastName,
+      email,
+      dateOfBirth,
+      gender,
+      mobileNo,
+      
       password: hashPassword,
-      isAdmin: true
+      isAdmin: true,
     };
     adminobj = await UserModel.create(newAdmin) as IUser;
-    return response.status(201).json({ message: "Registered successfully.", adminobj });
+    
+    return res.status(201).json({ message: "Registered successfully.", adminobj });
   } catch (error) {
     console.log(error);
-    return response.status(500).json({ message: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
@@ -130,22 +142,41 @@ export const login = async (req: Request, res: Response) => {
 };
 
 //GET ADMIN
+// export const getAllAdmin = async (req: Request, res: Response) => {
+//   try {
+//     let admin = await UserModel.findById({
+//       isAdmin: true,
+//       isDelete: false,
+//     });
+//     // console.log(admin);
+//     if (!admin) {
+//       return res.status(404).json({ message: `Admin Data Not Found...!` });
+//     }
+//     res.status(200).json(admin);
+//   } catch (error) {
+//     console.log(error);
+//     res
+//       .status(500)
+//       .json({ message: `Internal Server Error..${console.error()}` });
+//   }
+// };
+
+// Function to get all users who are not admins
 export const getAllAdmin = async (req: Request, res: Response) => {
   try {
-    let admin = await UserModel.findById({
-      isAdmin: true,
-      isDelete: false,
-    });
-    // console.log(admin);
-    if (!admin) {
-      return res.status(404).json({ message: `Admin Data Not Found...!` });
+   
+    const users = await UserModel.find({ isAdmin: false, isDelete: false });
+
+    // Check if users are found
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: 'No users found' });
     }
-    res.status(200).json(admin);
+
+    // Return users in the response
+    res.status(200).json({ users });
   } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .json({ message: `Internal Server Error..${console.error()}` });
+    console.error(error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
