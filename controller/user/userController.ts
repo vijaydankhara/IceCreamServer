@@ -184,18 +184,17 @@ export const getAllAdmin = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     let user = await UserModel.findById(req.query.userId);
-    console.log("user is :", user);
-    
     if (!user) {
-      return res.status(404).json({ message: `User Not Found...` });
+      return res.status(404).json({ message: "User Not Found..." });
     }
     user = await UserModel.findByIdAndUpdate(user._id, { ...req.body });
-    res.status(201).json({ user: user, message: `User Updated Successfully...` });
+    res.status(201).json({ user, message: "User Updated Successfully..." });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    console.error(error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 
 // DELETE USER
